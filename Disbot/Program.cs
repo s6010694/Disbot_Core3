@@ -1,4 +1,5 @@
-﻿using Disbot.Configurations;
+﻿using Disbot.AI;
+using Disbot.Configurations;
 using Disbot.Connector;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
@@ -16,8 +17,9 @@ namespace Disbot
         private static CommandsNextModule commands { get; set; }
         static async Task Main(string[] args)
         {
-            await InitializeDiscordConnector();
+            var test = SpotifyConfiguration.Context;
 
+            await InitializeDiscordConnector();
         }
 
         private static async Task InitializeDiscordConnector()
@@ -34,10 +36,11 @@ namespace Disbot
             discordConnector.Ready += Discord_Ready;
             discordConnector.Heartbeated += Discord_HeartBeated;
             discordConnector.MessageCreated += Discord_MessageCreated;
-            //commands = discordConnector.UseCommandsNext(new CommandsNextConfiguration
-            //{
-            //    StringPrefix = AppConfiguration.Content.CommandPrefix
-            //});
+            commands = discordConnector.UseCommandsNext(new CommandsNextConfiguration
+            {
+                StringPrefix = AppConfiguration.Content.CommandPrefix
+            });
+            commands.RegisterCommands<Commands>();
             await discordConnector.ConnectAsync();
             await Task.Delay(-1);
         }
@@ -50,8 +53,25 @@ namespace Disbot
 
         private static async Task Discord_MessageCreated(MessageCreateEventArgs e)
         {
-            var message = e.Message;
-            await Service.Context.MessageHistory.InsertMessageAsync(message);
+            try
+            {
+                var message = e.Message;
+                if (!message.Content.StartsWith(AppConfiguration.Content.CommandPrefix))
+                {
+                    var ssense = await NectecService.CallSSenseService(message.Content);
+                    if (ssense.sentiment.polarity == "negative")
+                    {
+                        var ch = await discordConnector.GetChannelAsync(AppConfiguration.Content.Discord.UsersChannelID);
+
+                        await ch.SendMessageAsync("สุภาพหน่อย!!");
+                    }
+                }
+                await Service.Context.MessageHistory.InsertMessageAsync(message);
+            }
+            catch (Exception ex)
+            {
+
+            }
             //var users = await e.Guild.GetAllMembersAsync();
             //Service.Context.Member.InsertDiscordMember(users);
             //throw new NotImplementedException();

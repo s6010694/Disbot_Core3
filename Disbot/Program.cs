@@ -5,6 +5,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using DSharpPlus.VoiceNext;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,10 +16,9 @@ namespace Disbot
     {
         private static DiscordClient discordConnector { get; set; }
         private static CommandsNextModule commands { get; set; }
+        private static VoiceNextClient Voice { get; set; }
         static async Task Main(string[] args)
         {
-            var test = SpotifyConfiguration.Context;
-
             await InitializeDiscordConnector();
         }
 
@@ -36,11 +36,18 @@ namespace Disbot
             discordConnector.Ready += Discord_Ready;
             discordConnector.Heartbeated += Discord_HeartBeated;
             discordConnector.MessageCreated += Discord_MessageCreated;
+
             commands = discordConnector.UseCommandsNext(new CommandsNextConfiguration
             {
                 StringPrefix = AppConfiguration.Content.CommandPrefix
             });
             commands.RegisterCommands<Commands>();
+
+            var vnextCfg = new VoiceNextConfiguration()
+            {
+                VoiceApplication = DSharpPlus.VoiceNext.Codec.VoiceApplication.Music
+            };
+            Voice = discordConnector.UseVoiceNext(vnextCfg);
             await discordConnector.ConnectAsync();
             await Task.Delay(-1);
         }

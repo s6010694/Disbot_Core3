@@ -16,7 +16,7 @@ namespace Disbot
         //[RequirePermissions(DSharpPlus.Permissions.Administrator)]
         public async Task Clean(CommandContext context, byte range = 1, int limit = 100)
         {
-            await context.RespondAsync($"[{DateTime.Now}] Cleaning top {100} messages in the past {range} hour(s).");
+            await context.RespondAsync($"[{DateTime.Now}] Cleaning top {limit} messages in the past {range} hour(s).");
             await Task.Delay(3000);
             var ch = await context.Client.GetChannelAsync(AppConfiguration.Content.Discord.UsersChannelID);
             var unfilteredMessage = await ch.GetMessagesAsync(limit: limit);
@@ -34,6 +34,11 @@ namespace Disbot
             try
             {
                 var tracks = await SpotifyConfiguration.Context.Client.SearchItemsAsync(q, SpotifyAPI.Web.Enums.SearchType.Track, limit: top);
+                if (tracks.Tracks.Items.Count() == 0)
+                {
+                    await context.RespondAsync($"{q} is not match with any music on Spotify.");
+                    return;
+                }
                 var tracksString = tracks?.Tracks?.Items?.Select(x => $"{x.Name} - {x.Album.Name} by {x.Artists.FirstOrDefault()?.Name} @{x.ExternUrls.First().Value}");
                 foreach (var track in tracksString)
                 {

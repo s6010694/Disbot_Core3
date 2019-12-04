@@ -4,6 +4,9 @@ using Utilities.Interfaces;
 using Disbot.Repositories;
 using System.Data.SQLite;
 using Disbot.Configurations;
+using Disbot.Repositories.Components;
+using System.Collections;
+using Disbot.Models;
 
 namespace Disbot
 {
@@ -15,16 +18,32 @@ namespace Disbot
         Service(string connectionString)
         {
             Connector = new DatabaseConnector<SQLiteConnection, SQLiteParameter>(connectionString);
+            ServiceCheckUp();
         }
+
+        private void ServiceCheckUp()
+        {
+            var memberTableCheck = this.Connector.ExecuteScalar($"SELECT name FROM sqlite_master WHERE type='table' AND name='Member';");
+            if (memberTableCheck == null)
+            {
+                this.Connector.CreateTable<Member>();
+            }
+            var messageHistoryTableCheck = this.Connector.ExecuteScalar($"SELECT name FROM sqlite_master WHERE type='table' AND name='MessageHistory';");
+            if (messageHistoryTableCheck == null)
+            {
+                this.Connector.CreateTable<MessageHistory>();
+            }
+        }
+
         private MemberRepository _Member { get; set; }
-         /// <summary>
+        /// <summary>
         /// Data repository for Member table
-         /// </summary>
+        /// </summary>
         public MemberRepository Member
         {
             get
             {
-                if(_Member == null)
+                if (_Member == null)
                 {
                     _Member = new MemberRepository(Connector);
                 }
@@ -32,25 +51,25 @@ namespace Disbot
             }
         }
         private MessageHistoryRepository _MessageHistory { get; set; }
-         /// <summary>
+        /// <summary>
         /// Data repository for MessageHistory table
-         /// </summary>
+        /// </summary>
         public MessageHistoryRepository MessageHistory
         {
             get
             {
-                if(_MessageHistory == null)
+                if (_MessageHistory == null)
                 {
                     _MessageHistory = new MessageHistoryRepository(Connector);
                 }
                 return _MessageHistory;
             }
         }
-            public void Dispose()
-            {
-                Connector?.Dispose();
-            }
-#region Stored Procedure
-#endregion
+        public void Dispose()
+        {
+            Connector?.Dispose();
+        }
+        #region Stored Procedure
+        #endregion
     }
 }

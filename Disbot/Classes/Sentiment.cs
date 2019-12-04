@@ -4,7 +4,7 @@ namespace Disbot.Classes
 {
     public class Sentiment
     {
-        public int score { get; set; }
+        public float score { get; set; }
         [JsonProperty("polarity-neg")]
         public bool polarity_neg { get; set; }
         [JsonProperty("polarity-pos")]

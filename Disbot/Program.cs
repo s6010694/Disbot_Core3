@@ -59,18 +59,19 @@ namespace Disbot
                 if (!message.Content.StartsWith(AppConfiguration.Content.CommandPrefix))
                 {
                     var ssense = await NectecService.CallSSenseService(message.Content);
-                    if (ssense.sentiment.polarity == "negative")
+                    if (ssense != null && ssense.IsNegative())
                     {
                         var ch = await discordConnector.GetChannelAsync(AppConfiguration.Content.Discord.UsersChannelID);
 
                         await ch.SendMessageAsync("สุภาพหน่อย!!");
+                        await ch.SendMessageAsync("https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTpQsmwswjh_mYmeklbtFhPJpfBHSP32FzGHBmEopst9YWX43t1");
                     }
                 }
                 await Service.Context.MessageHistory.InsertMessageAsync(message);
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex);
             }
             //var users = await e.Guild.GetAllMembersAsync();
             //Service.Context.Member.InsertDiscordMember(users);
@@ -84,14 +85,13 @@ namespace Disbot
 
         private static async Task Discord_Ready(ReadyEventArgs e)
         {
+
             var guild = e.Client.Guilds.First().Value;
             var existingUsers = Service.Context.Member.Select(x => x.ID).ToArray();
             var users = await guild.GetAllMembersAsync();
             var newUsers = users.Where(x => !existingUsers.Contains(x.Id));
             Service.Context.Member.InsertDiscordMember(newUsers);
-            //throw new NotImplementedException();
-            //var ch = await discordConnector.GetChannelAsync(AppConfiguration.Content.Discord.UsersChannelID);
-            //await ch.SendMessageAsync("I'll be back.");
+
         }
 
         private static async Task Discord_VoiceStateUpdated(VoiceStateUpdateEventArgs e)

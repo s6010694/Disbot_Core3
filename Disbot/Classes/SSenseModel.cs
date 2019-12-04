@@ -12,5 +12,9 @@ namespace Disbot.Classes
         public object[] comparative { get; set; }
         public object[] associative { get; set; }
         public Intention intention { get; set; }
+        public bool IsNegative()
+        {
+            return sentiment.polarity == "negative" && sentiment.score >= 70;
+        }
     }
 }

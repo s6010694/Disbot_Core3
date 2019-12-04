@@ -2,9 +2,9 @@
 {
     public class Intention
     {
-        public int request { get; set; }
-        public int sentiment { get; set; }
-        public int question { get; set; }
-        public int announcement { get; set; }
+        public string request { get; set; }
+        public string sentiment { get; set; }
+        public string question { get; set; }
+        public string announcement { get; set; }
     }
 }

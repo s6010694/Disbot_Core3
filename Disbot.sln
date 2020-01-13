@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29209.152
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Disbot", "Disbot\Disbot.csproj", "{0B1C9FAB-4D84-4439-9E2E-4D015788D188}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Disbot", "Disbot\Disbot.csproj", "{0B1C9FAB-4D84-4439-9E2E-4D015788D188}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SentimentClassifier", "..\SentimentAnalyzer\SentimentClassifier\SentimentClassifier.csproj", "{B581991A-EF4E-4271-B50F-1AA375E8E094}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{0B1C9FAB-4D84-4439-9E2E-4D015788D188}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0B1C9FAB-4D84-4439-9E2E-4D015788D188}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0B1C9FAB-4D84-4439-9E2E-4D015788D188}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B581991A-EF4E-4271-B50F-1AA375E8E094}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B581991A-EF4E-4271-B50F-1AA375E8E094}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B581991A-EF4E-4271-B50F-1AA375E8E094}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B581991A-EF4E-4271-B50F-1AA375E8E094}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

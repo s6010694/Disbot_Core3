@@ -13,15 +13,14 @@ namespace Disbot
 {
     class Program
     {
+        private static readonly SentimentClassifier.SentimentClassifier classifier = new SentimentClassifier.SentimentClassifier();
         private static DiscordClient discordConnector { get; set; }
         private static CommandsNextModule commands { get; set; }
         static async Task Main(string[] args)
         {
             var test = SpotifyConfiguration.Context;
-
             await InitializeDiscordConnector();
         }
-
         private static async Task InitializeDiscordConnector()
         {
             discordConnector = new DiscordClient(new DiscordConfiguration()
@@ -58,8 +57,9 @@ namespace Disbot
                 var message = e.Message;
                 if (!message.Content.StartsWith(AppConfiguration.Content.CommandPrefix))
                 {
-                    var ssense = await NectecService.CallSSenseService(message.Content);
-                    if (ssense != null && ssense.IsNegative())
+                    //var ssense = await NectecService.CallSSenseService(message.Content);
+                    var prediction = classifier.Predict(message.Content);
+                    if (prediction?.ClassifyLabel == SentimentClassifier.Enum.SentimentClassficationResult.Negative)
                     {
                         var ch = await discordConnector.GetChannelAsync(AppConfiguration.Content.Discord.UsersChannelID);
 

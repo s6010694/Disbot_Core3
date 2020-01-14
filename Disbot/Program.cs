@@ -17,6 +17,7 @@ namespace Disbot
         private static DiscordClient discordConnector { get; set; }
         private static CommandsNextModule commands { get; set; }
         private static VoiceNextClient Voice { get; set; }
+        private readonly static SentimentClassifier.SentimentClassifier classifier = new SentimentClassifier.SentimentClassifier();
         static async Task Main(string[] args)
         {
             await InitializeDiscordConnector();
@@ -65,8 +66,10 @@ namespace Disbot
                 var message = e.Message;
                 if (!message.Content.StartsWith(AppConfiguration.Content.CommandPrefix))
                 {
-                    var ssense = await NectecService.CallSSenseService(message.Content);
-                    if (ssense != null && ssense.IsNegative())
+                    //var ssense = await NectecService.CallSSenseService(message.Content);
+                    //if (ssense != null && ssense.IsNegative())
+                    var prediction = classifier.Predict(message.Content);
+                    if (prediction.ClassifyLabel == SentimentClassifier.Enum.SentimentClassficationResult.Negative)
                     {
                         var ch = await discordConnector.GetChannelAsync(AppConfiguration.Content.Discord.UsersChannelID);
 

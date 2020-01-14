@@ -85,7 +85,7 @@ namespace Disbot.Repositories.Components
         /// <param name="data">Generic object.</param>
         public virtual async Task InsertMultipleAsync(IEnumerable<T> data)
         {
-            await Connector.InsertMultipleAsync(data).ConfigureAwait(false);
+            await Connector.InsertManyAsync(data).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace Disbot.Repositories.Components
         /// <param name="data">Generic object.</param>
         public virtual void InsertMultiple(IEnumerable<T> data)
         {
-            Connector.InsertMultiple(data);
+            Connector.InsertMany(data);
         }
 
         /// <summary>

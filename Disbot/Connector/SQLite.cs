@@ -1,22 +1,32 @@
 ﻿using System;
 using System.Data.SQLite;
+using Utilities.Enum;
 using Utilities.SQL;
 
 namespace Disbot.Connector
 {
-    public class SQLite : DatabaseConnector<SQLiteConnection, SQLiteParameter>
+    public class SQLite : DatabaseConnector
     {
         private static string ConnectionString = @"Data Source=disbot.db;Version=3;";
         private static string InMemoryDb = @"Data Source=:memory:;version=3;New=True;";
-        public SQLite() : base(ConnectionString)
+        public SQLite() : base(typeof(SQLiteConnection), ConnectionString)
         {
-            SQLFunctionConfiguration.Add(Utilities.Enum.SqlFunction.Length, "LENGTH");
+
         }
-        public SQLite(string connectionString) : base(connectionString)
+        public SQLite(string connectionString) : base(typeof(SQLiteConnection), connectionString)
         {
-            SQLFunctionConfiguration.Add(Utilities.Enum.SqlFunction.Length, "LENGTH");
+
         }
-        protected override string MapCLRTypeToSQLType(Type type)
+        protected override string CompatibleFunctionName(SqlFunction function)
+        {
+            switch (function)
+            {
+                case SqlFunction.Length:
+                    return "LENGTH";
+            }
+            return base.CompatibleFunctionName(function);
+        }
+        protected override string CompatibleSQLType(Type type)
         {
             if (type == typeof(string))
             {
@@ -40,15 +50,15 @@ namespace Disbot.Connector
             }
             else if (type == typeof(float) || type == typeof(float?))
             {
-                return "REAL";                                                                                                                                                                                               
+                return "REAL";
             }
             else if (type == typeof(double) || type == typeof(double?))
             {
                 return "REAL";
             }
-            else if (type == typeof(bool) || type == typeof(bool?))                                         
+            else if (type == typeof(bool) || type == typeof(bool?))
             {
-                return "INTEGER";                                                                                                                     
+                return "INTEGER";
             }
             else if (type == typeof(decimal) || type == typeof(decimal?))
             {
@@ -70,7 +80,7 @@ namespace Disbot.Connector
             {
                 return "BLOB";
             }
-            return base.MapCLRTypeToSQLType(type);
+            return base.CompatibleSQLType(type);
 
         }
     }

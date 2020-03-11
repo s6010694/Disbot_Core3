@@ -13,7 +13,7 @@ namespace Disbot.Repositories
         public async Task InsertMessageAsync(DiscordMessage message)
         {
             var dbMessage = new MessageHistory();
-            dbMessage.MemberID = message.Author.Id;
+            dbMessage.MemberID = (long)message.Author.Id;
             dbMessage.Message = message.Content;
             dbMessage.CreateDate = DateTime.Now;
             await this.InsertAsync(dbMessage);

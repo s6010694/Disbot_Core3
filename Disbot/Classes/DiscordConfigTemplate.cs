@@ -10,5 +10,6 @@ namespace Disbot.Classes
         public string AccessToken { get; set; }
         public ulong BotChannelID { get; set; }
         public ulong UsersChannelID { get; set; }
+        public ulong ActiveVoiceChannelId { get; set; }
     }
 }

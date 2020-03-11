@@ -21,11 +21,6 @@ namespace Disbot.AI
             var content = response.Content;
             var ssense = Newtonsoft.Json.JsonConvert.DeserializeObject<SSenseModel>(content);
             return ssense;
-            var result = await Utilities.HttpRequest.GetAsyncFor<SSenseModel>($"https://api.aiforthai.in.th/ssense?text={text}", new Dictionary<string, string>() {
-                { "Apikey","aDsiiQrzcVTVS8TD7JvVn419fVJ6bcBf" },
-                {"Content-Type","application/x-www-form-urlencoded" }
-            });
-            return result;
         }
     }
 }

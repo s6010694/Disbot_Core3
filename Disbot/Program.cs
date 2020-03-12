@@ -23,7 +23,7 @@ namespace Disbot
         private static readonly SentimentClassifier.SentimentClassifier Classifier = new SentimentClassifier.SentimentClassifier();
         public static DiscordClient DiscordClient { get; private set; }
         private static CommandsNextModule Commands { get; set; }
-        private static VoiceNextClient Voice { get; set; }
+        //private static VoiceNextClient Voice { get; set; }
         private static ConsoleEventDelegate handler;
         static async Task Main(string[] args)
         {
@@ -93,16 +93,16 @@ namespace Disbot
             });
             Commands.RegisterCommands<Commands>();
             Commands.CommandErrored += OnCommandErrored;
-            Voice = DiscordClient.UseVoiceNext(new VoiceNextConfiguration()
-            {
-                VoiceApplication = DSharpPlus.VoiceNext.Codec.VoiceApplication.Music
-            });
+            //Voice = DiscordClient.UseVoiceNext(new VoiceNextConfiguration()
+            //{
+            //    VoiceApplication = DSharpPlus.VoiceNext.Codec.VoiceApplication.Music
+            //});
             await DiscordClient.ConnectAsync();
         }
 
         private static Task Discord_GuildAvailable(GuildCreateEventArgs e)
         {
-            var test = Voice.GetConnection(e.Guild);
+            //var test = Voice.GetConnection(e.Guild);
             return Task.CompletedTask;
         }
 
@@ -205,7 +205,9 @@ namespace Disbot
                 if (e.Author.Id != DiscordClient.CurrentUser.Id && Service.Context.Member.CalculateIsLevelUp((long)e.Author.Id, out var level))
                 {
                     PlayLevelupSound(e.Guild);
-                    await ch.SendDisposableMessageAsync($"🎉🎉🎉 🥂{e.Author.Mention}🥂 ได้อัพเลเวลเป็น {level}! 🎉🎉🎉 ");
+                    await ch.SendMessageAsync($"🎉🎉🎉 🥂{e.Author.Mention}🥂 ได้อัพเลเวลเป็น {level}! 🎉🎉🎉 ");
+                    var avatarPath = Etc.MemberEtc.GetLevelupAvatar(e.Author.AvatarUrl, level);
+                    await ch.SendFileAsync(avatarPath);
                 }
                 Console.WriteLine($"[MessageCreated] : {message.Content}");
             }
@@ -229,11 +231,10 @@ namespace Disbot
             var newUsers = users.Where(x => !existingUsers.Contains((long)x.Id));
             Service.Context.Member.InsertDiscordMember(newUsers);
             var channel = await DiscordClient.GetDefaultChannelAsync();
-            await channel.SendDisposableMessageAsync($@"{e.Client.CurrentUser.Mention} พร้อมรับใช้ขอรับ");
             await DiscordClient.UpdateStatusAsync(DiscordGameExtension.GetRandomActivity());
-            var vnext = DiscordClient.GetVoiceNextClient();
-            await vnext.ConnectAsync(await DiscordClient.GetDefaultVoiceChannelAsync());
-            await channel.SendDisposableMessageAsync("เชื่อมต่อสำเร็จ");
+            //VoiceNextClient vnext = DiscordClient.GetVoiceNextClient();
+            //await vnext.ConnectAsync(await DiscordClient.GetDefaultVoiceChannelAsync());
+            await channel.SendDisposableMessageAsync($@"{e.Client.CurrentUser.Mention} พร้อมรับใช้ขอรับ");
 
         }
         private static readonly List<ulong> currentlyOnVoiceChannelUsers = new List<ulong>();

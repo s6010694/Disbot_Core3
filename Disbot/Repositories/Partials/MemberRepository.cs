@@ -40,21 +40,17 @@ namespace Disbot.Repositories
             level = 0;
             var member = this.Query(x => x.ID == id).First();
             member.Exp += 1 * AppConfiguration.Content.GetUpdatedMultiplyRate();
-            var currentExp = member.Exp;
             var nextExp = member.NextExp;
             bool levelUp = false;
-            while (currentExp >= nextExp)
+            while (member.Exp >= nextExp)
             {
                 var x = member.Level += 1;
                 //nextExp = Math.Round(x * Math.Sin(x) + (Math.Sqrt(x) * x * 1));//round(x * sin(x) +  (sqrt(x) * x * c))
                 nextExp = (float)Math.Round(x * Math.Sin(x) + Math.Pow(x, 1.486)); //ROUND(x*SIN(x) + POWER(x,c),0), lower required exp by 5% compared to above equation at constant = 1
+                member.Exp = 0;
                 member.NextExp = nextExp;
                 level = member.Level;
                 levelUp = true;
-            }
-            if (levelUp)
-            {
-                member.Exp = 0;
             }
             this.Update(member);
             return levelUp;

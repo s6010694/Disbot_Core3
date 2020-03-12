@@ -20,6 +20,7 @@
     <PackageReference Include="SpotifyAPI.Web" Version="4.2.2" />
     <PackageReference Include="SpotifyAPI.Web.Auth" Version="4.2.2" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.112" />
+    <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>

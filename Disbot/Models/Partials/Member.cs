@@ -6,9 +6,6 @@ namespace Disbot.Models
     //[Utilities.Attributes.SQL.Table("Member")]
     public partial class Member
     {
-        public void LevelUp()
-        {
-            this.Level += 1;
-        }
+
     }
 }

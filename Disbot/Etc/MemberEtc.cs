@@ -14,6 +14,10 @@ namespace Disbot.Etc
     {
         public static string GetLevelupAvatar(string url, uint level)
         {
+            return GetLevelupAvatar(url, (int)level);
+        }
+        public static string GetLevelupAvatar(string url, int level)
+        {
             var temp = Path.GetTempFileName().Replace("tmp", "jpg");
             using (var webClient = new WebClient())
             {
@@ -39,7 +43,10 @@ namespace Disbot.Etc
             }
 
         }
-
+        private static string GetLevelDesc(int level)
+        {
+            return GetLevelDesc((uint)level);
+        }
         private static string GetLevelDesc(uint level)
         {
             return level switch

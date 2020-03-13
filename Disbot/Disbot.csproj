@@ -27,6 +27,9 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\language.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\levelup.mp3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -42,10 +45,17 @@
     <None Update="libsodium.dll.checksums">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="opus.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="sodium.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Models\Partials\" />
+    <Folder Include="Properties\" />
     <Folder Include="Repositories\Partials\" />
   </ItemGroup>
 

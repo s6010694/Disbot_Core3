@@ -24,5 +24,13 @@ namespace Disbot.Extensions
             });
 
         }
+        public static async Task SendDisposableFileAsync(this DiscordChannel channel, string file_data, int deleteInMs = 10000)
+        {
+            var sentMessage = await channel.SendFileAsync(file_data);
+            Task.Delay(deleteInMs).ContinueWith(async (arg) =>
+            {
+                await sentMessage.DeleteAsync();
+            });
+        }
     }
 }

@@ -23,7 +23,7 @@ namespace Disbot
         private static readonly SentimentClassifier.SentimentClassifier Classifier = new SentimentClassifier.SentimentClassifier();
         public static DiscordClient DiscordClient { get; private set; }
         private static CommandsNextModule Commands { get; set; }
-        //private static VoiceNextClient Voice { get; set; }
+        private static VoiceNextClient Voice { get; set; }
         private static ConsoleEventDelegate handler;
         static async Task Main(string[] args)
         {
@@ -85,6 +85,8 @@ namespace Disbot
             DiscordClient.MessageCreated += Discord_MessageCreated;
             DiscordClient.UserUpdated += Discord_UserUpdated;
             DiscordClient.GuildAvailable += Discord_GuildAvailable;
+            DiscordClient.MessageReactionAdded += Discord_ReactionAdded;
+            DiscordClient.MessageReactionRemoved += Discord_ReactionRemoved;
             Commands = DiscordClient.UseCommandsNext(new CommandsNextConfiguration
             {
                 StringPrefix = AppConfiguration.Content.CommandPrefix,
@@ -93,11 +95,46 @@ namespace Disbot
             });
             Commands.RegisterCommands<Commands>();
             Commands.CommandErrored += OnCommandErrored;
-            //Voice = DiscordClient.UseVoiceNext(new VoiceNextConfiguration()
-            //{
-            //    VoiceApplication = DSharpPlus.VoiceNext.Codec.VoiceApplication.Music
-            //});
+            Voice = DiscordClient.UseVoiceNext(new VoiceNextConfiguration()
+            {
+                VoiceApplication = DSharpPlus.VoiceNext.Codec.VoiceApplication.Music
+            });
             await DiscordClient.ConnectAsync();
+        }
+        private static async Task Discord_ReactionRemoved(MessageReactionRemoveEventArgs e)
+        {
+            var channel = e.Channel;
+            var message = await channel.GetMessageAsync(e.Message.Id);
+            var author = message.Author;
+            if (author.Id == e.User.Id)
+            {
+                return;
+            }
+            var dbUser = Service.Context.Member.FirstOrDefault(x => x.ID == (long)author.Id);
+            if (dbUser != null)
+            {
+                var exp = 1;
+                dbUser.Exp -= exp;
+                Service.Context.Member.Update(dbUser);
+            }
+        }
+        private static async Task Discord_ReactionAdded(MessageReactionAddEventArgs e)
+        {
+            var channel = e.Channel;
+            var message = await channel.GetMessageAsync(e.Message.Id);
+            var author = message.Author;
+            if (author.Id == e.User.Id)
+            {
+                return;
+            }
+            var dbUser = Service.Context.Member.FirstOrDefault(x => x.ID == (long)author.Id);
+            if (dbUser != null)
+            {
+                var exp = 1;
+                dbUser.Exp += exp;
+                Service.Context.Member.Update(dbUser);
+                await channel.SendDisposableMessageAsync($"{author.Mention} ได้รับ {exp} EXP จากการถูก reaction ข้อความ!");
+            }
         }
 
         private static Task Discord_GuildAvailable(GuildCreateEventArgs e)
@@ -198,7 +235,7 @@ namespace Disbot
                     if (prediction?.ClassifyLabel == SentimentClassifier.Enum.SentimentClassficationResult.Negative)
                     {
                         await ch.SendDisposableMessageAsync($"สุภาพหน่อยขอรับ {message.Author.Mention}!");
-                        //await ch.SendMessageAsync("https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTpQsmwswjh_mYmeklbtFhPJpfBHSP32FzGHBmEopst9YWX43t1");
+                        await ch.SendDisposableFileAsync(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), Path.Combine("Assets", "language.jpg")));
                     }
                 }
                 await Service.Context.MessageHistory.InsertMessageAsync(message);

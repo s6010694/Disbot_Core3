@@ -7,22 +7,20 @@
 // </auto-generated>
 // ------------------------------------------------------------------------------
 using System;
-using Utilities.Attributes.SQL;
-
 namespace Disbot.Models
 {
-    //You can get Utilities package via nuget : Install-Package Deszolate.Utilities.Lite
-    //[Utilities.Attributes.SQL.Table("Member")]
-    public partial class Member
-    {
-        [PrimaryKey(false)]
-        public long? ID { get; set; }
-        public string Username { get; set; }
-        public string DisplayName { get; set; }
-        public string AvatarUrl { get; set; }
-        public uint Level { get; set; }
-        public float Exp { get; set; }
-        public float NextExp { get; set; }
-    }
+	//You can get Utilities package via nuget : Install-Package Deszolate.Utilities.Lite
+	//[Utilities.Attributes.SQL.Table("Member")]
+	public partial class Member
+	{
+		public long ID { get; set; }
+		[Utilities.Attributes.SQL.PrimaryKey(false)]
+		public string Username { get; set; }
+		public string DisplayName { get; set; }
+		public string AvatarUrl { get; set; }
+		public int Level { get; set; }
+		public float Exp { get; set; }
+		public float NextExp { get; set; }
+	}
 }
 

@@ -2,6 +2,8 @@
 using Disbot.Extensions;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
+using DSharpPlus.VoiceNext;
 using LinqToTwitter;
 using System;
 using System.Drawing;
@@ -33,7 +35,7 @@ namespace Disbot
         {
             try
             {
-                if (!await Validate(context)) return;
+                //if (!await Validate(context)) return;
                 if (0 < limit || limit < 1001)
                 {
                     await context.RespondAsync($"กำลังลบ {limit} ข้อความที่เกี่ยวกับระบบใน {range} ชั่วโมงที่ผ่านมา");
@@ -116,68 +118,68 @@ namespace Disbot
                 await context.RespondAsync("เกิดข้อผิดพลาดในการทำงานขึ้น แต่ได้บันทึกข้อผิดพลาดไว้สำหรับตรวจสอบแก้ไขแล้ว");
             }
         }
-        //[Command("join")]
-        //public async Task Join(CommandContext ctx, DiscordChannel chn = null)
-        //{
-        //    var vnext = ctx.Client.GetVoiceNextClient();
-        //    if (vnext == null)
-        //    {
-        //        // not enabled
-        //        await ctx.RespondAsync("VNext is not enabled or configured.");
-        //        return;
-        //    }
+        [Command("join")]
+        public async Task Join(CommandContext ctx, DiscordChannel chn = null)
+        {
+            var vnext = ctx.Client.GetVoiceNextClient();
+            if (vnext == null)
+            {
+                // not enabled
+                await ctx.RespondAsync("VNext is not enabled or configured.");
+                return;
+            }
 
-        //    // check whether we aren't already connected
-        //    var vnc = vnext.GetConnection(ctx.Guild);
-        //    if (vnc != null)
-        //    {
-        //        // already connected
-        //        await ctx.RespondAsync("Already connected in this guild.");
-        //        return;
-        //    }
+            // check whether we aren't already connected
+            var vnc = vnext.GetConnection(ctx.Guild);
+            if (vnc != null)
+            {
+                // already connected
+                await ctx.RespondAsync("Already connected in this guild.");
+                return;
+            }
 
-        //    // get member's voice state
-        //    var vstat = ctx.Member?.VoiceState;
-        //    if (vstat?.Channel == null && chn == null)
-        //    {
-        //        // they did not specify a channel and are not in one
-        //        await ctx.RespondAsync("You are not in a voice channel.");
-        //        return;
-        //    }
+            // get member's voice state
+            var vstat = ctx.Member?.VoiceState;
+            if (vstat?.Channel == null && chn == null)
+            {
+                // they did not specify a channel and are not in one
+                await ctx.RespondAsync("You are not in a voice channel.");
+                return;
+            }
 
-        //    // channel not specified, use user's
-        //    if (chn == null)
-        //        chn = vstat.Channel;
+            // channel not specified, use user's
+            if (chn == null)
+                chn = vstat.Channel;
 
-        //    // connect
-        //    vnc = await vnext.ConnectAsync(chn);
-        //    await ctx.RespondAsync($"Connected to `{chn.Name}`");
-        //}
-        //[Command("leave")]
-        //public async Task Leave(CommandContext ctx)
-        //{
-        //    // check whether VNext is enabled
-        //    var vnext = ctx.Client.GetVoiceNextClient();
-        //    if (vnext == null)
-        //    {
-        //        // not enabled
-        //        await ctx.RespondAsync("VNext is not enabled or configured.");
-        //        return;
-        //    }
+            // connect
+            vnc = await vnext.ConnectAsync(chn);
+            await ctx.RespondAsync($"Connected to `{chn.Name}`");
+        }
+        [Command("leave")]
+        public async Task Leave(CommandContext ctx)
+        {
+            // check whether VNext is enabled
+            var vnext = ctx.Client.GetVoiceNextClient();
+            if (vnext == null)
+            {
+                // not enabled
+                await ctx.RespondAsync("VNext is not enabled or configured.");
+                return;
+            }
 
-        //    // check whether we are connected
-        //    var vnc = vnext.GetConnection(ctx.Guild);
-        //    if (vnc == null)
-        //    {
-        //        // not connected
-        //        await ctx.RespondAsync("Not connected in this guild.");
-        //        return;
-        //    }
+            // check whether we are connected
+            var vnc = vnext.GetConnection(ctx.Guild);
+            if (vnc == null)
+            {
+                // not connected
+                await ctx.RespondAsync("Not connected in this guild.");
+                return;
+            }
 
-        //    // disconnect
-        //    vnc.Disconnect();
-        //    await ctx.RespondAsync("Disconnected");
-        //}
+            // disconnect
+            vnc.Disconnect();
+            await ctx.RespondAsync("Disconnected");
+        }
         //[Command("play")]
         //public async Task Play(CommandContext ctx)
         //{

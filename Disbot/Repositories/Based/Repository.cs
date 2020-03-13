@@ -15,10 +15,11 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Utilities.Interfaces;
 using Utilities.SQL.Extension;
+
 namespace Disbot.Repositories.Based
 {
     /// <summary>
-    /// Repository class designed for IDatabaseConnectorExtension.
+    /// Repository class designed for IDatabaseConnector.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <typeparam name="TDatabase"></typeparam>
@@ -193,6 +194,14 @@ namespace Disbot.Repositories.Based
         public int Count()
         {
             return this.Connector.Count<T>();
+        }
+		/// <summary>
+        /// Returns rows count that is satisfied specific condition from repository.
+        /// </summary>
+        /// <returns></returns>
+        public int Count(Expression<Func<T,bool>> predicate)
+        {
+            return this.Connector.Count<T>(predicate);
         }
         /// <summary>
         /// Filters a sequence of values based on a predicate.

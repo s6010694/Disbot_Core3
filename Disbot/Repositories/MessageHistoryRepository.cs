@@ -11,16 +11,16 @@ using Disbot.Repositories.Based;
 using Disbot.Models;
 namespace Disbot.Repositories
 {
-    ///<summary>
-    /// Data contractor for MessageHistory
-    ///</summary>
-    public partial class MessageHistoryRepository : Repository<MessageHistory>
-    {
-        private readonly Service service;
-        public MessageHistoryRepository(Service service) : base(service.Connector)
-        {
-            this.service = service;
-        }
-    }
+	///<summary>
+	/// Data contractor for MessageHistory
+	///</summary>
+	public partial class MessageHistoryRepository : Repository<MessageHistory>
+	{
+		private readonly Service Service;
+		public MessageHistoryRepository(Service service) : base(service.Connector)
+		{
+			this.Service = service;
+		}
+	}
 }
 

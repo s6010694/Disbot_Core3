@@ -16,10 +16,10 @@ namespace Disbot.Repositories
 	///</summary>
 	public partial class MemberRepository : Repository<Member>
 	{
-		private readonly Service service;
+		private readonly Service Service;
 		public MemberRepository(Service service) : base(service.Connector)
 		{
-			this.service = service;
+			this.Service = service;
 		}
 	}
 }

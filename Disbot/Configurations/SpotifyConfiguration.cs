@@ -56,8 +56,8 @@ namespace Disbot.Configurations
             _refreshTokenWorker.Interval = 30 * (1000 * 60);
             _refreshTokenWorker.Elapsed += async (s, e) =>
             {
-                Console.WriteLine("Refreshing spotify token...");
-                await AuthenFactory.RefreshToken(RefreshToken);
+                var token = await AuthenFactory.RefreshToken(RefreshToken);
+                Client.AccessToken = token.AccessToken;
             };
             _refreshTokenWorker.Start();
         }

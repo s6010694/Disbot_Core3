@@ -1,22 +1,28 @@
 ﻿using Disbot.Configurations;
 using Disbot.Extensions;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.VoiceNext;
 using LinqToTwitter;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Disbot
 {
-    public class Commands
+    public class Commands : BaseCommandModule
     {
         private async Task<bool> Validate(CommandContext context)
         {
@@ -30,7 +36,7 @@ namespace Disbot
         }
         [Command("clean")]
         [Description("Delete UNWANTED message on-demand.")]
-        [RequirePermissions(DSharpPlus.Permissions.Administrator)]
+        //[RequirePermissions(DSharpPlus.Permissions.Administrator)]
         public async Task Clean(CommandContext context, byte range = 1, int limit = 100, string FORCED = "")
         {
             try
@@ -118,75 +124,75 @@ namespace Disbot
                 await context.RespondAsync("เกิดข้อผิดพลาดในการทำงานขึ้น แต่ได้บันทึกข้อผิดพลาดไว้สำหรับตรวจสอบแก้ไขแล้ว");
             }
         }
-        [Command("join")]
-        public async Task Join(CommandContext ctx, DiscordChannel chn = null)
-        {
-            var vnext = ctx.Client.GetVoiceNextClient();
-            if (vnext == null)
-            {
-                // not enabled
-                await ctx.RespondAsync("VNext is not enabled or configured.");
-                return;
-            }
+        //[Command("join")]
+        //public async Task Join(CommandContext ctx, DiscordChannel chn = null)
+        //{
+        //    var vnext = ctx.Client.GetVoiceNext();
+        //    if (vnext == null)
+        //    {
+        //        // not enabled
+        //        await ctx.RespondAsync("VNext is not enabled or configured.");
+        //        return;
+        //    }
 
-            // check whether we aren't already connected
-            var vnc = vnext.GetConnection(ctx.Guild);
-            if (vnc != null)
-            {
-                // already connected
-                await ctx.RespondAsync("Already connected in this guild.");
-                return;
-            }
+        //    // check whether we aren't already connected
+        //    var vnc = vnext.GetConnection(ctx.Guild);
+        //    if (vnc != null)
+        //    {
+        //        // already connected
+        //        await ctx.RespondAsync("Already connected in this guild.");
+        //        return;
+        //    }
 
-            // get member's voice state
-            var vstat = ctx.Member?.VoiceState;
-            if (vstat?.Channel == null && chn == null)
-            {
-                // they did not specify a channel and are not in one
-                await ctx.RespondAsync("You are not in a voice channel.");
-                return;
-            }
+        //    // get member's voice state
+        //    var vstat = ctx.Member?.VoiceState;
+        //    if (vstat?.Channel == null && chn == null)
+        //    {
+        //        // they did not specify a channel and are not in one
+        //        await ctx.RespondAsync("You are not in a voice channel.");
+        //        return;
+        //    }
 
-            // channel not specified, use user's
-            if (chn == null)
-                chn = vstat.Channel;
+        //    // channel not specified, use user's
+        //    if (chn == null)
+        //        chn = vstat.Channel;
 
-            // connect
-            vnc = await vnext.ConnectAsync(chn);
-            await ctx.RespondAsync($"Connected to `{chn.Name}`");
-        }
-        [Command("leave")]
-        public async Task Leave(CommandContext ctx)
-        {
-            // check whether VNext is enabled
-            var vnext = ctx.Client.GetVoiceNextClient();
-            if (vnext == null)
-            {
-                // not enabled
-                await ctx.RespondAsync("VNext is not enabled or configured.");
-                return;
-            }
+        //    // connect
+        //    vnc = await vnext.ConnectAsync(chn);
+        //    //await ctx.RespondAsync($"Connected to `{chn.Name}`");
+        //}
+        //[Command("leave")]
+        //public async Task Leave(CommandContext ctx)
+        //{
+        //    // check whether VNext is enabled
+        //    var vnext = ctx.Client.GetVoiceNext();
+        //    if (vnext == null)
+        //    {
+        //        // not enabled
+        //        await ctx.RespondAsync("VNext is not enabled or configured.");
+        //        return;
+        //    }
 
-            // check whether we are connected
-            var vnc = vnext.GetConnection(ctx.Guild);
-            if (vnc == null)
-            {
-                // not connected
-                await ctx.RespondAsync("Not connected in this guild.");
-                return;
-            }
+        //    // check whether we are connected
+        //    var vnc = vnext.GetConnection(ctx.Guild);
+        //    if (vnc == null)
+        //    {
+        //        // not connected
+        //        await ctx.RespondAsync("Not connected in this guild.");
+        //        return;
+        //    }
 
-            // disconnect
-            vnc.Disconnect();
-            await ctx.RespondAsync("Disconnected");
-        }
+        //    // disconnect
+        //    vnc.Disconnect();
+        //    //await ctx.RespondAsync("Disconnected");
+        //}
         //[Command("play")]
         //public async Task Play(CommandContext ctx)
         //{
         //    try
         //    {
         //        var file = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), Path.Combine("Assets", "levelup.mp3"));
-        //        var vnext = ctx.Client.GetVoiceNextClient();
+        //        var vnext = ctx.Client.GetVoiceNext();
         //        var vnc = vnext.GetConnection(ctx.Guild);
         //        if (vnc == null)
         //            throw new InvalidOperationException("Not connected in this guild.");
@@ -194,13 +200,11 @@ namespace Disbot
         //        if (!File.Exists(file))
         //            throw new FileNotFoundException("File was not found.");
 
-        //        await ctx.RespondAsync("👌");
         //        await vnc.SendSpeakingAsync(true); // send a speaking indicator
-
         //        var psi = new ProcessStartInfo
         //        {
         //            FileName = @"D:\Downloads\ffmpeg_win32_x64\ffmpeg.exe",
-        //            Arguments = $@" -i ""{file}"" -ac 2 -f s16le -ar 48000",// pipe:1",
+        //            Arguments = $@" -i ""{file}"" -ac 2 -f s16le -ar 48000 pipe:1",
         //            RedirectStandardOutput = true,
         //            UseShellExecute = false
         //        };
@@ -209,16 +213,19 @@ namespace Disbot
 
         //        var buff = new byte[3840];
         //        var br = 0;
+        //        var transmitter = vnc.GetTransmitStream();
+        //        transmitter.VolumeModifier = 1;
         //        while ((br = ffout.Read(buff, 0, buff.Length)) > 0)
         //        {
         //            if (br < buff.Length) // not a full sample, mute the rest
         //                for (var i = br; i < buff.Length; i++)
         //                    buff[i] = 0;
 
-        //            await vnc.SendAsync(buff, 20);
+        //            //await transmitter.WriteAsync(buff);
         //        }
-
+        //        await transmitter.WriteAsync(buff);
         //        await vnc.SendSpeakingAsync(false); // we're not speaking anymore
+        //        await ctx.RespondAsync("👌");
         //    }
         //    catch (Exception ex)
         //    {
@@ -231,12 +238,76 @@ namespace Disbot
 
             var requestMember = context.Member;
             var dbMember = Service.Context.Member.Query(x => x.ID == (long)requestMember.Id).First();
-            await context.Channel.SendMessageAsync($"{requestMember.Mention}");
+            await context.Channel.SendMessageAsync($"{requestMember.Mention} เลเวล {dbMember.Level} {Math.Round(dbMember.Exp / dbMember.NextExp, 2) * 100}%");
             var avatarPath = Etc.MemberEtc.GetLevelupAvatar(context.Member.AvatarUrl, dbMember.Level);
             await context.Channel.SendFileAsync(avatarPath);
             //await context.Channel.SendFileAsync(avatarPath);
             File.Delete(avatarPath);
 
+        }
+        [Command("covid")]
+        public async Task CovidReport(CommandContext context, [RemainingText] string country = "thailand")
+        {
+            try
+            {
+                using var client = new HttpClient();
+                Func<int, string> format = (x) => x.ToString("N0");
+                //using var client = new Utilities.HttpRequest("https://coronavirus-19-api.herokuapp.com");
+                if (country.ToLower() == "help")
+                {
+                    var request = await client.GetAsync("https://coronavirus-19-api.herokuapp.com/countries");
+                    var content = await request.Content.ReadAsStringAsync();
+                    var result = JsonConvert.DeserializeObject<List<Classes.CovidReportModel>>(content);
+                    var supportedCountries = string.Join(", ", result.Select(x => x.Country));
+                    if (supportedCountries.Length > 2000)
+                    {
+                        var q1 = supportedCountries.Substring(0, supportedCountries.Length / 2);
+                        var q2 = supportedCountries.Replace(q1, "");
+                        await context.RespondAsync($"ประเทศที่รองรับการค้นหา : {q1}");
+                        await context.RespondAsync(q2);
+                    }
+                    else
+                    {
+                        await context.RespondAsync($"ประเทศที่รองรับการค้นหา : {supportedCountries}");
+                    }
+                    return;
+                }
+                if (country.ToLower() == "all")
+                {
+                    //var result = await client.GetAsync<Classes.CovidReportModel>("/all");
+                    var request = await client.GetAsync($"https://coronavirus-19-api.herokuapp.com/all");
+                    var content = await request.Content.ReadAsStringAsync();
+                    var result = JsonConvert.DeserializeObject<Classes.CovidReportModel>(content);
+                    await context.RespondAsync("สถานการณ์ทั่วโลก ณ ปัจจุบัน");
+                    await context.RespondAsync($"จำนวนผู้ติดเชื้อที่พบทั้งสิ้น {format(result.Cases)} คน");
+                    await context.RespondAsync($"จำนวนผู้เสียชีวิตทั้งสิ้น {format(result.Deaths)} คน");
+                    await context.RespondAsync($"จำนวนผู้ป่วยที่รักษาหายแล้วทั้งสิ้น {format(result.Recovered)} คน");
+                }
+                else
+                {
+                    var request = await client.GetAsync($"https://coronavirus-19-api.herokuapp.com/countries/{country}");
+                    var content = await request.Content.ReadAsStringAsync();
+                    if (request.StatusCode != HttpStatusCode.OK || content == "Country not found")
+                    {
+                        await context.RespondAsync($"ไม่พบ {country} ในการค้นหา ใช้คำสั่ง !covid help เพื่อดูประเทศที่รองรับการค้นหา");
+                        return;
+                    }
+                    var result = JsonConvert.DeserializeObject<Classes.CovidReportModel>(content);
+                    //var result = await client.GetAsync<Classes.CovidReportModel>($"/countries/{country}");
+                    await context.RespondAsync($"สถานการณ์ของ {result.Country} ณ ปัจจุบัน");
+                    await context.RespondAsync($"จำนวนผู้ติดเชื้อที่พบวันนี้ {format(result.TodayCases)} คน");
+                    await context.RespondAsync($"จำนวนผู้ติดเชื้อที่พบทั้งสิ้น {format(result.Cases)} คน");
+                    await context.RespondAsync($"จำนวนผู้เสียชีวิตวันนี้ {format(result.TodayDeaths)} คน");
+                    await context.RespondAsync($"จำนวนผู้เสียชีวิตทั้งสิ้น {format(result.Deaths)} คน");
+                    await context.RespondAsync($"จำนวนผู้ป่วยอาการวิกฤตทั้งสิ้น {format(result.Critical)} คน");
+                    await context.RespondAsync($"จำนวนผู้ป่วยที่กำลังรักษาตัว {format(result.Active)} คน");
+                    await context.RespondAsync($"จำนวนผู้ป่วยที่รักษาหายแล้วทั้งสิ้น {format(result.Recovered)} คน");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Service.Context.ExceptionLog.InsertAsync(new Models.ExceptionLog("covid", ex));
+            }
         }
         private static Image Resize(Image img, int outputWidth, int outputHeight)
         {

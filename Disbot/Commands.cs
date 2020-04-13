@@ -1,22 +1,26 @@
 ﻿using Disbot.Configurations;
 using Disbot.Extensions;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.VoiceNext;
 using LinqToTwitter;
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Disbot
 {
-    public class Commands
+    public class Commands : BaseCommandModule
     {
         private async Task<bool> Validate(CommandContext context)
         {
@@ -30,7 +34,7 @@ namespace Disbot
         }
         [Command("clean")]
         [Description("Delete UNWANTED message on-demand.")]
-        [RequirePermissions(DSharpPlus.Permissions.Administrator)]
+        //[RequirePermissions(DSharpPlus.Permissions.Administrator)]
         public async Task Clean(CommandContext context, byte range = 1, int limit = 100, string FORCED = "")
         {
             try
@@ -121,7 +125,7 @@ namespace Disbot
         [Command("join")]
         public async Task Join(CommandContext ctx, DiscordChannel chn = null)
         {
-            var vnext = ctx.Client.GetVoiceNextClient();
+            var vnext = ctx.Client.GetVoiceNext();
             if (vnext == null)
             {
                 // not enabled
@@ -153,13 +157,13 @@ namespace Disbot
 
             // connect
             vnc = await vnext.ConnectAsync(chn);
-            await ctx.RespondAsync($"Connected to `{chn.Name}`");
+            //await ctx.RespondAsync($"Connected to `{chn.Name}`");
         }
         [Command("leave")]
         public async Task Leave(CommandContext ctx)
         {
             // check whether VNext is enabled
-            var vnext = ctx.Client.GetVoiceNextClient();
+            var vnext = ctx.Client.GetVoiceNext();
             if (vnext == null)
             {
                 // not enabled
@@ -178,7 +182,7 @@ namespace Disbot
 
             // disconnect
             vnc.Disconnect();
-            await ctx.RespondAsync("Disconnected");
+            //await ctx.RespondAsync("Disconnected");
         }
         //[Command("play")]
         //public async Task Play(CommandContext ctx)
@@ -186,7 +190,7 @@ namespace Disbot
         //    try
         //    {
         //        var file = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), Path.Combine("Assets", "levelup.mp3"));
-        //        var vnext = ctx.Client.GetVoiceNextClient();
+        //        var vnext = ctx.Client.GetVoiceNext();
         //        var vnc = vnext.GetConnection(ctx.Guild);
         //        if (vnc == null)
         //            throw new InvalidOperationException("Not connected in this guild.");
@@ -194,13 +198,11 @@ namespace Disbot
         //        if (!File.Exists(file))
         //            throw new FileNotFoundException("File was not found.");
 
-        //        await ctx.RespondAsync("👌");
         //        await vnc.SendSpeakingAsync(true); // send a speaking indicator
-
         //        var psi = new ProcessStartInfo
         //        {
         //            FileName = @"D:\Downloads\ffmpeg_win32_x64\ffmpeg.exe",
-        //            Arguments = $@" -i ""{file}"" -ac 2 -f s16le -ar 48000",// pipe:1",
+        //            Arguments = $@" -i ""{file}"" -ac 2 -f s16le -ar 48000 pipe:1",
         //            RedirectStandardOutput = true,
         //            UseShellExecute = false
         //        };
@@ -209,16 +211,19 @@ namespace Disbot
 
         //        var buff = new byte[3840];
         //        var br = 0;
+        //        var transmitter = vnc.GetTransmitStream();
+        //        transmitter.VolumeModifier = 1;
         //        while ((br = ffout.Read(buff, 0, buff.Length)) > 0)
         //        {
         //            if (br < buff.Length) // not a full sample, mute the rest
         //                for (var i = br; i < buff.Length; i++)
         //                    buff[i] = 0;
 
-        //            await vnc.SendAsync(buff, 20);
+        //            //await transmitter.WriteAsync(buff);
         //        }
-
+        //        await transmitter.WriteAsync(buff);
         //        await vnc.SendSpeakingAsync(false); // we're not speaking anymore
+        //        await ctx.RespondAsync("👌");
         //    }
         //    catch (Exception ex)
         //    {
@@ -231,12 +236,53 @@ namespace Disbot
 
             var requestMember = context.Member;
             var dbMember = Service.Context.Member.Query(x => x.ID == (long)requestMember.Id).First();
-            await context.Channel.SendMessageAsync($"{requestMember.Mention}");
+            await context.Channel.SendMessageAsync($"{requestMember.Mention} เลเวล {dbMember.Level} {Math.Round(dbMember.Exp / dbMember.NextExp, 2) * 100}%");
             var avatarPath = Etc.MemberEtc.GetLevelupAvatar(context.Member.AvatarUrl, dbMember.Level);
             await context.Channel.SendFileAsync(avatarPath);
             //await context.Channel.SendFileAsync(avatarPath);
             File.Delete(avatarPath);
 
+        }
+        [Command("covid")]
+        public async Task CovidReport(CommandContext context, string country = "thailand")
+        {
+            var sb = new StringBuilder();
+            string title;
+            try
+            {
+                using var client = new Utilities.HttpRequest("https://coronavirus-19-api.herokuapp.com");
+                if (country.ToLower() == "all")
+                {
+                    title = "สถานการณ์ทั่วโลก ณ ปัจจุบัน";
+                    var (StatusCode, result) = await client.GetAsync<Classes.CovidReportModel>("all");
+                    sb.AppendLine("🌎 สถานการณ์ทั่วโลก ณ ปัจจุบัน");
+                    sb.AppendLine($"😷 จำนวนผู้ติดเชื้อที่พบทั้งสิ้น {result.Cases}");
+                    sb.AppendLine($"💀 จำนวนผู้เสียชีวิตทั้งสิ้น {result.Deaths}");
+                    sb.AppendLine($"👌 จำนวนผู้ป่วยที่รักษาหายแล้วทั้งสิ้น {result.Recovered}");
+                }
+                else
+                {
+                    var (code, result) = await client.GetAsync<Classes.CovidReportModel>($"countries/{country}");
+                    title = $"สถานการณ์ของ {result.Country} ณ ปัจจุบัน";
+                    sb.AppendLine($"😷 จำนวนผู้ติดเชื้อที่พบวันนี้ {result.TodayCases}");
+                    sb.AppendLine($"😷 จำนวนผู้ติดเชื้อที่พบทั้งสิ้น {result.Cases}");
+                    sb.AppendLine($"💀 จำนวนผู้เสียชีวิตวันนี้ {result.TodayDeaths}");
+                    sb.AppendLine($"💀 จำนวนผู้เสียชีวิตทั้งสิ้น {result.Deaths}");
+                    sb.AppendLine($"🏨 จำนวนผู้ป่วยอาการวิกฤตทั้งสิ้น {result.Critical}");
+                    sb.AppendLine($"🏨 จำนวนผู้ป่วยที่กำลังรักษาตัว {result.Active}");
+                    sb.AppendLine($"👌 จำนวนผู้ป่วยที่รักษาหายแล้วทั้งสิ้น {result.Recovered}");
+                }
+                var embed = new DiscordEmbedBuilder()
+                {
+                    Title = title,
+                    Description = sb.ToString()
+                };
+                await context.RespondAsync("", embed: embed);
+            }
+            catch (Exception ex)
+            {
+                await context.RespondAsync(ex.ToString());
+            }
         }
         private static Image Resize(Image img, int outputWidth, int outputHeight)
         {

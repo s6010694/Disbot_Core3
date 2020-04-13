@@ -23,11 +23,11 @@ namespace Disbot.Etc
             {
                 var bytes = webClient.DownloadData(url);
                 using var stream = new MemoryStream(bytes);
-                using var avatar = Resize(Image.FromStream(stream), 256, 256);//Resize(Image.FromFile(tempFile), 256, 256);
+                using var avatar = Resize(Image.FromStream(stream), 128, 128);//Resize(Image.FromFile(tempFile), 256, 256);
                 using (var g = Graphics.FromImage(avatar))
                 {
-                    using var font = new Font(FontFamily.GenericMonospace, 25, FontStyle.Bold);
-                    using var descFont = new Font(FontFamily.GenericMonospace, 17, FontStyle.Regular);
+                    using var font = new Font(FontFamily.GenericMonospace, 12, FontStyle.Bold);
+                    using var descFont = new Font(FontFamily.GenericMonospace, 8, FontStyle.Regular);
                     var text = $"Level {level}";
                     string levelDesc = GetLevelDesc(level);
                     var measure = g.MeasureString(text, font);

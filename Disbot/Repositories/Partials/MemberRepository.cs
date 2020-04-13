@@ -40,6 +40,7 @@ namespace Disbot.Repositories
             level = 0;
             var member = this.Query(x => x.ID == id).First();
             member.Exp += 1 * AppConfiguration.Content.GetUpdatedMultiplyRate();
+            var exp = member.Exp;
             var nextExp = member.NextExp;
             bool levelUp = false;
             while (member.Exp >= nextExp)
@@ -50,25 +51,38 @@ namespace Disbot.Repositories
                 //nextExp = (float)Math.Round(x * Math.Sin(x) + Math.Pow(x, 1.486)); //ROUND(x*SIN(x) + POWER(x,c),0), lower required exp by 5% compared to above equation at constant = 1
                 //ROUND(A2  + POWER(A2/2,1.1611) * SQRT(A2),0) / ROUND(A2 + POWER(A2/ 2, 1.115) * SQRT(A2), 0)
                 nextExp = (float)Math.Round(x + Math.Pow(x / 2, c) * Math.Sqrt(x), 0); //much much linear compare to x sin x'ish and reflect how "leveling" should be, adjusting c for fancy graph curve.
-                member.Exp = 0;
+                member.Exp = nextExp - member.Exp;
                 member.NextExp = nextExp;
                 level = member.Level;
                 levelUp = true;
+                exp -= nextExp;
             }
             this.Update(member);
             return levelUp;
-            //var currentLevel = member.Level;
-            //var totalPosts = this.service.MessageHistory.Count(x => x.MemberID == id) * AppConfiguration.Content.GetUpdatedMultiplyRate();
-            //var requiredPosts = Math.Pow(currentLevel, 2);
-            //var shouldLevelup = totalPosts > requiredPosts;
-            //level = 0;
-            //if (shouldLevelup)
-            //{
-            //    member.Level += 1;
-            //    this.Update(member);
-            //    level = member.Level;
-            //}
-            //return shouldLevelup;
+        }
+        internal void RecalcLevel()
+        {
+            var sql = $@"SELECT Member.Id As Id,COUNT(MessageHistory.MemberID) as Exp
+                         FROM
+                         	Member
+                         JOIN
+                         	MessageHistory
+                         ON 
+                         	Member.ID = MessageHistory.MemberID
+                         GROUP BY Member.ID";
+            var res1 = this.Connector.ExecuteReader(sql);
+            foreach (var item in res1)
+            {
+                var id = (long)item.Id;
+                var exp = (float)item.Exp;
+                var user = this.Service.Member.Query(x => x.ID == id).FirstOrDefault();
+                user.Level = 1;
+                user.NextExp = 1;
+                user.Exp = exp;
+                this.Service.Member.Update(user);
+                CalculateIsLevelUp(id, out var _);
+            }
+
         }
     }
 }

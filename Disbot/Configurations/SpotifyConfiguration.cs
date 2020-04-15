@@ -12,6 +12,7 @@ namespace Disbot.Configurations
         private readonly AuthorizationCodeAuth AuthenFactory;
         private readonly Timer _refreshTokenWorker;
         private string RefreshToken;
+        public bool IsAvailable { get; private set; } = false;
         public SpotifyWebAPI Client
         { get; private set; }
         public static SpotifyConfiguration Context { get; } = new SpotifyConfiguration();
@@ -47,6 +48,7 @@ namespace Disbot.Configurations
                 {
                     Client.AccessToken = token.AccessToken;
                 }
+                IsAvailable = true;
             };
             AuthenFactory.Start();
             AuthenFactory.OpenBrowser();

@@ -48,5 +48,13 @@ namespace Disbot.Configurations
             var instance = JsonConvert.DeserializeObject<AppConfiguration>(content);
             return instance.MultiplyRate / 100;
         }
+        public void SetMultiplyRate(float rate)
+        {
+            var configPath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "appsettings.json");
+            var content = File.ReadAllText(configPath);
+            var instance = JsonConvert.DeserializeObject<AppConfiguration>(content);
+            instance.MultiplyRate = rate;
+            File.WriteAllText(configPath, JsonConvert.SerializeObject(instance));
+        }
     }
 }

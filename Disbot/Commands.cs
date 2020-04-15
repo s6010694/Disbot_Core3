@@ -1,21 +1,18 @@
 ﻿using Disbot.Configurations;
 using Disbot.Extensions;
-using DSharpPlus;
+using Disbot.Helpers;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.VoiceNext;
 using LinqToTwitter;
 using System;
-using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Disbot
@@ -32,6 +29,7 @@ namespace Disbot
             }
             return true;
         }
+        private static bool cancellationActivate;
         [Command("clean")]
         [Description("Delete UNWANTED message on-demand.")]
         //[RequirePermissions(DSharpPlus.Permissions.Administrator)]
@@ -55,8 +53,10 @@ namespace Disbot
                                    x.Content.Contains(context.Client.CurrentUser.Id.ToString()) ||
                                    FORCED == "--force"
                                    ));
+                    cancellationActivate = false;
                     foreach (var message in messages)
                     {
+                        if (cancellationActivate) break;
                         await message.DeleteAsync();
                         await Task.Delay(100);
                     }
@@ -67,6 +67,16 @@ namespace Disbot
             {
                 await Service.Context.ExceptionLog.InsertAsync(new Models.ExceptionLog("clean", ex));
             }
+        }
+        [Command("stop")]
+        public async Task Stop(CommandContext context)
+        {
+            if (cancellationActivate)
+            {
+                return;
+            }
+            cancellationActivate = true;
+            await context.RespondAsync("ยกเลิกการลบข้อความแล้ว");
         }
         [Command("search")]
         [Description("Search music on spotify!")]
@@ -109,80 +119,18 @@ namespace Disbot
                 var locations = session.Trends.Where(x => x.Type == TrendType.Available).FirstOrDefault().Locations;
                 var country = locations.First(x => x.CountryCode == "TH" && x.Name == "Bangkok");
                 var topTrends = session.Trends.Where(x => x.Type == TrendType.Place && x.WoeID == country.WoeID).Take(10).Select((x, idx) => $"{idx + 1}). {x.Name}");
-                await context.RespondAsync("10 อันดับ trends ยอดนิยมขณะนี้คือ");
-                foreach (var trend in topTrends)
+                var content = new DiscordEmbedBuilder()
                 {
-                    await context.RespondAsync(trend);
-                    await Task.Delay(100);
-                }
+                    Title = $"10 อันดับ trends ยอดนิยมขณะนี้คือ",
+                    Description = string.Join("\n", topTrends)
+                };
+                await context.RespondAsync("", embed: content);
             }
             catch (Exception ex)
             {
                 await Service.Context.ExceptionLog.InsertAsync(new Models.ExceptionLog(nameof(News), ex));
                 await context.RespondAsync("เกิดข้อผิดพลาดในการทำงานขึ้น แต่ได้บันทึกข้อผิดพลาดไว้สำหรับตรวจสอบแก้ไขแล้ว");
             }
-        }
-        [Command("join")]
-        public async Task Join(CommandContext ctx, DiscordChannel chn = null)
-        {
-            var vnext = ctx.Client.GetVoiceNext();
-            if (vnext == null)
-            {
-                // not enabled
-                await ctx.RespondAsync("VNext is not enabled or configured.");
-                return;
-            }
-
-            // check whether we aren't already connected
-            var vnc = vnext.GetConnection(ctx.Guild);
-            if (vnc != null)
-            {
-                // already connected
-                await ctx.RespondAsync("Already connected in this guild.");
-                return;
-            }
-
-            // get member's voice state
-            var vstat = ctx.Member?.VoiceState;
-            if (vstat?.Channel == null && chn == null)
-            {
-                // they did not specify a channel and are not in one
-                await ctx.RespondAsync("You are not in a voice channel.");
-                return;
-            }
-
-            // channel not specified, use user's
-            if (chn == null)
-                chn = vstat.Channel;
-
-            // connect
-            vnc = await vnext.ConnectAsync(chn);
-            //await ctx.RespondAsync($"Connected to `{chn.Name}`");
-        }
-        [Command("leave")]
-        public async Task Leave(CommandContext ctx)
-        {
-            // check whether VNext is enabled
-            var vnext = ctx.Client.GetVoiceNext();
-            if (vnext == null)
-            {
-                // not enabled
-                await ctx.RespondAsync("VNext is not enabled or configured.");
-                return;
-            }
-
-            // check whether we are connected
-            var vnc = vnext.GetConnection(ctx.Guild);
-            if (vnc == null)
-            {
-                // not connected
-                await ctx.RespondAsync("Not connected in this guild.");
-                return;
-            }
-
-            // disconnect
-            vnc.Disconnect();
-            //await ctx.RespondAsync("Disconnected");
         }
         //[Command("play")]
         //public async Task Play(CommandContext ctx)
@@ -281,25 +229,55 @@ namespace Disbot
             }
             catch (Exception ex)
             {
-                await context.RespondAsync(ex.ToString());
+                await Service.Context.ExceptionLog.InsertAsync(new Models.ExceptionLog("covid", ex));
             }
         }
-        private static Image Resize(Image img, int outputWidth, int outputHeight)
+        [Command("info")]
+        public async Task Information(CommandContext context)
         {
-
-            if (img == null || (img.Width == outputWidth && img.Height == outputHeight)) return img;
-            Bitmap outputImage;
-            Graphics graphics;
+            var compiledDate = Assembly.GetExecutingAssembly().GetCreationTime();
+            var compiledDateStr = compiledDate.ToString("yyyy.MM.dd");
+            var info = new DiscordEmbedBuilder()
+            {
+                Title = "Server Information",
+                Description =
+                $"Exp rate : x{AppConfiguration.Content.GetUpdatedMultiplyRate()}\n" +
+                $"Spotify API Available : {(SpotifyConfiguration.Context.IsAvailable ? "Yes" : "No")}\n" +
+                $"Commands Available : Yes",
+                Footer = new DiscordEmbedBuilder.EmbedFooter()
+                {
+                    Text = $"Created by Exception, v.{compiledDateStr}"
+                }
+            };
+            await context.RespondAsync("", false, info);
+        }
+        [Command("rate")]
+        [RequireOwner]
+        public async Task SetRate(CommandContext context, float rate)
+        {
+            var currentRate = AppConfiguration.Content.GetUpdatedMultiplyRate();
+            AppConfiguration.Content.SetMultiplyRate(rate);
+            await context.RespondAsync($"ดำเนินการปรับอัตราคูณ Exp จาก {currentRate * 100}% เป็น {rate}% แล้ว");
+        }
+        [Command("getfile")]
+        [RequireOwner]
+        public async Task GetDatabase(CommandContext context, string fileName)
+        {
             try
             {
-                outputImage = new Bitmap(outputWidth, outputHeight, System.Drawing.Imaging.PixelFormat.Format16bppRgb555);
-                graphics = Graphics.FromImage(outputImage);
-                graphics.DrawImage(img, new Rectangle(0, 0, outputWidth, outputHeight), new Rectangle(0, 0, img.Width, img.Height), GraphicsUnit.Pixel);
-                return outputImage;
+                var file = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), fileName);
+                if (File.Exists(file))
+                {
+                    var copyFileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "copy_of_" + fileName);
+                    File.Copy(file, copyFileName, true);
+                    var ownerChannel = await context.Member.CreateDmChannelAsync();
+                    await ownerChannel.SendFileAsync(copyFileName);
+                    File.Delete(copyFileName);
+                }
             }
             catch
             {
-                throw;
+                await context.RespondAsync($"ไฟล์นี้กำลังถูกใช้งานอยู่ในขณะนี้ ไม่สามารถส่งมาให้คุณได้!");
             }
         }
     }

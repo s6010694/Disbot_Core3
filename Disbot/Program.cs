@@ -7,7 +7,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using DSharpPlus.VoiceNext;
+//using DSharpPlus.VoiceNext;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -24,7 +24,7 @@ namespace Disbot
         private static readonly SentimentClassifier.SentimentClassifier Classifier = new SentimentClassifier.SentimentClassifier();
         public static DiscordClient DiscordClient { get; private set; }
         private static CommandsNextExtension Commands { get; set; }
-        private static VoiceNextExtension Voice { get; set; }
+        //private static VoiceNextExtension Voice { get; set; }
         private static ConsoleEventDelegate handler;
         static async Task Main(string[] args)
         {
@@ -76,7 +76,8 @@ namespace Disbot
                 Token = AppConfiguration.Content.Discord.AccessToken,
                 TokenType = TokenType.Bot,
                 LogLevel = AppConfiguration.Content.LogLevel,
-                UseInternalLogHandler = true
+                UseInternalLogHandler = true,
+                AutoReconnect = true
             });
             DiscordClient.ClientErrored += Discord_ClientErrored;
             DiscordClient.VoiceStateUpdated += Discord_VoiceStateUpdated;
@@ -94,27 +95,27 @@ namespace Disbot
                 StringPrefixes = new[] { AppConfiguration.Content.CommandPrefix },
                 EnableDms = false,
                 EnableMentionPrefix = true,
-                
+
             });
             Commands.RegisterCommands<Commands>();
             Commands.CommandErrored += OnCommandErrored;
-            Voice = DiscordClient.UseVoiceNext(new VoiceNextConfiguration()
-            {
-                AudioFormat = AudioFormat.Default
-                //VoiceApplication = DSharpPlus.VoiceNext.Codec.VoiceApplication.Music
-            });
+            //Voice = DiscordClient.UseVoiceNext(new VoiceNextConfiguration()
+            //{
+            //    AudioFormat = AudioFormat.Default
+            //    //VoiceApplication = DSharpPlus.VoiceNext.Codec.VoiceApplication.Music
+            //});
             await DiscordClient.ConnectAsync();
         }
 
         private static Task Discord_GuilddownloadCompleted(GuildDownloadCompletedEventArgs e)
         {
-            var guild = e.Client.Guilds.First().Value;
-            var channels = guild.Channels.Where(x => x.Value.Type == ChannelType.Voice);
-            var vnext = DiscordClient.GetVoiceNext();
-            var vnc = vnext.GetConnection(guild);
-            var chn = channels.First().Value;
-            //var chn = await DiscordClient.GetDefaultVoiceChannelAsync();
-            vnext.ConnectAsync(chn);
+            //var guild = e.Client.Guilds.First().Value;
+            //var channels = guild.Channels.Where(x => x.Value.Type == ChannelType.Voice);
+            //var vnext = DiscordClient.GetVoiceNext();
+            //var vnc = vnext.GetConnection(guild);
+            //var chn = channels.First().Value;
+            ////var chn = await DiscordClient.GetDefaultVoiceChannelAsync();
+            //vnext.ConnectAsync(chn);
             return Task.CompletedTask;
         }
 
@@ -243,6 +244,7 @@ namespace Disbot
         {
             try
             {
+                if (e.Message.Author.Id == DiscordClient.CurrentUser.Id) return;
                 var message = e.Message;
                 var ch = await DiscordClient.GetDefaultChannelAsync();
                 if (!message.Content.StartsWith(AppConfiguration.Content.CommandPrefix))
@@ -262,6 +264,7 @@ namespace Disbot
                     await ch.SendMessageAsync($"🎉🎉🎉 🥂{e.Author.Mention}🥂 ได้อัพเลเวลเป็น {level}! 🎉🎉🎉 ");
                     var avatarPath = Etc.MemberEtc.GetLevelupAvatar(e.Author.AvatarUrl, level);
                     await ch.SendFileAsync(avatarPath);
+                    File.Delete(avatarPath);
                 }
                 Console.WriteLine($"[MessageCreated] : {message.Content}");
             }
@@ -336,47 +339,47 @@ namespace Disbot
         }
         private static async Task PlayLevelUpSound(DiscordGuild guild)
         {
-            try
-            {
-                var file = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), Path.Combine("Assets", "levelup.mp3"));
-                var vnext = DiscordClient.GetVoiceNext();
-                var vnc = vnext.GetConnection(guild);
-                if (vnc == null)
-                    throw new InvalidOperationException("Not connected in this guild.");
+            //try
+            //{
+            //    var file = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), Path.Combine("Assets", "levelup.mp3"));
+            //    var vnext = DiscordClient.GetVoiceNext();
+            //    var vnc = vnext.GetConnection(guild);
+            //    if (vnc == null)
+            //        throw new InvalidOperationException("Not connected in this guild.");
 
-                if (!File.Exists(file))
-                    throw new FileNotFoundException("File was not found.");
+            //    if (!File.Exists(file))
+            //        throw new FileNotFoundException("File was not found.");
 
-                await vnc.SendSpeakingAsync(true); // send a speaking indicator
-                var psi = new ProcessStartInfo
-                {
-                    FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), Path.Combine("Assets", "ffmpeg")),
-                    Arguments = $@" -i ""{file}"" -ac 2 -f s16le -ar 48000 pipe:1",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false
-                };
-                var ffmpeg = Process.Start(psi);
-                var ffout = ffmpeg.StandardOutput.BaseStream;
+            //    await vnc.SendSpeakingAsync(true); // send a speaking indicator
+            //    var psi = new ProcessStartInfo
+            //    {
+            //        FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), Path.Combine("Assets", "ffmpeg")),
+            //        Arguments = $@" -i ""{file}"" -ac 2 -f s16le -ar 48000 pipe:1",
+            //        RedirectStandardOutput = true,
+            //        UseShellExecute = false
+            //    };
+            //    var ffmpeg = Process.Start(psi);
+            //    var ffout = ffmpeg.StandardOutput.BaseStream;
 
-                var buff = new byte[3840];
-                var br = 0;
-                var transmitter = vnc.GetTransmitStream();
-                transmitter.VolumeModifier = 1;
-                while ((br = ffout.Read(buff, 0, buff.Length)) > 0)
-                {
-                    if (br < buff.Length) // not a full sample, mute the rest
-                        for (var i = br; i < buff.Length; i++)
-                            buff[i] = 0;
+            //    var buff = new byte[3840];
+            //    var br = 0;
+            //    var transmitter = vnc.GetTransmitStream();
+            //    transmitter.VolumeModifier = 1;
+            //    while ((br = ffout.Read(buff, 0, buff.Length)) > 0)
+            //    {
+            //        if (br < buff.Length) // not a full sample, mute the rest
+            //            for (var i = br; i < buff.Length; i++)
+            //                buff[i] = 0;
 
-                    await transmitter.WriteAsync(buff);
-                }
-                //await transmitter.WriteAsync(buff);
-                await vnc.SendSpeakingAsync(false); // we're not speaking anymore
-            }
-            catch (Exception ex)
-            {
-                await Service.Context.ExceptionLog.InsertAsync(new Models.ExceptionLog("play", ex));
-            }
+            //        await transmitter.WriteAsync(buff);
+            //    }
+            //    //await transmitter.WriteAsync(buff);
+            //    await vnc.SendSpeakingAsync(false); // we're not speaking anymore
+            //}
+            //catch (Exception ex)
+            //{
+            //    await Service.Context.ExceptionLog.InsertAsync(new Models.ExceptionLog("play", ex));
+            //}
         }
     }
 }
